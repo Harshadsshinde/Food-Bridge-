@@ -53,13 +53,9 @@ export const getOrdersForNGO = catchAsyncErrors(async (req, res, next) => {
     const orders = await Order.find({ pincode: ngo.pincode, status: "Pending" })
         .populate("userId", "firstName lastName phone email");
 
-    if (!orders.length) {
-        return next(new ErrorHandler("No food requests found in this pincode!", 404));
-    }
-
     res.status(200).json({
         success: true,
-        orders
+        orders: orders || []
     });
 });
 
@@ -111,13 +107,9 @@ export const getAcceptedOrdersForVolunteer = catchAsyncErrors(async (req, res, n
         .populate("userId", "firstName lastName phone email")
         .populate("ngoId", "firstName lastName address");
 
-    if (!orders.length) {
-        return next(new ErrorHandler("No accepted food requests assigned to you!", 404));
-    }
-
     res.status(200).json({
         success: true,
-        orders
+        orders: orders || []
     });
 });
 
@@ -159,13 +151,9 @@ export const getAllOrdersByUser = catchAsyncErrors(async (req, res, next) => {
         .populate("ngoId", "firstName lastName address contactInfo")  // Adjust fields as needed for ngoId
         .populate("volunteerId", "firstName lastName phone email"); // Adjust fields as needed for volunteerId
 
-    if (!orders.length) {
-        return next(new ErrorHandler("No orders found for this user!", 404));
-    }
-
     res.status(200).json({
         success: true,
-        orders
+        orders: orders || []
     });
 });
 
@@ -183,13 +171,9 @@ export const getCompletedOrdersByVolunteer = catchAsyncErrors(async (req, res, n
       .populate("ngoId", "firstName lastName address")  // Populate NGO details
       .populate("volunteerId", "firstName lastName email phone");  // Populate volunteer details
   
-    if (!completedOrders || completedOrders.length === 0) {
-      return next(new ErrorHandler("No completed orders found.", 404));
-    }
-  
     res.status(200).json({
       success: true,
-      orders: completedOrders,
+      orders: completedOrders || [],
     });
   });
   
@@ -203,12 +187,8 @@ export const getOrderHistory = catchAsyncErrors(async (req, res, next) => {
         .populate("volunteerId", "firstName lastName phone email")
         .sort({ createdAt: -1 });
 
-    if (!orders.length) {
-        return next(new ErrorHandler("No order history found for this NGO.", 404));
-    }
-
     res.status(200).json({
         success: true,
-        orders
+        orders: orders || []
     });
 });

@@ -2,7 +2,8 @@ import React, { useState, useContext, useEffect } from 'react';
 import { FiUser, FiMail, FiPhone, FiMapPin, FiLock, FiEdit, FiHeart, FiBox, FiClock, FiSettings, FiLogOut, FiCreditCard } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from "../../context/AuthContext";
-import { is } from 'date-fns/locale';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -10,6 +11,10 @@ const Profile = () => {
 
   const [activeTab, setActiveTab] = useState('profile');
   const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [userImpact, setUserImpact] = useState(null);
+  const [donationHistory, setDonationHistory] = useState([]);
+  const [orderHistory, setOrderHistory] = useState([]);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -17,7 +22,9 @@ const Profile = () => {
     phone: '',
     address: '',
     pincode: '',
-    password: '••••••••'
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   });
   
   // Initialize form data when user data is available
@@ -30,22 +37,35 @@ const Profile = () => {
         phone: user.phone || '',
         address: user.address || '',
         pincode: user.pincode || '',
-        password: '••••••••'
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
       });
+      fetchImpact();
+      fetchHistory();
     }
   }, [user]);
 
-  const donationHistory = [
-    { id: 1, date: '2023-05-15', items: '5 kg Rice, 2 kg Lentils', status: 'Delivered', impact: 'Fed 15 people' },
-    { id: 2, date: '2023-04-28', items: '10 kg Vegetables, Bread', status: 'Delivered', impact: 'Fed 12 families' },
-    { id: 3, date: '2023-04-10', items: '3 kg Flour, Cooking Oil', status: 'Processing', impact: 'Estimated: Feed 8 people' },
-  ];
-  
-  const stats = {
-    donations: 12,
-    peopleFed: 84,
-    itemsShared: 38,
-    communityPoints: 1560
+  const fetchImpact = async () => {
+    try {
+      const { data } = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/impact`, { withCredentials: true });
+      setUserImpact(data.impact);
+    } catch (error) {
+      console.error("Error fetching impact:", error);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const [donationsRes, ordersRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/donation/user-donations`, { withCredentials: true }),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/order/orders`, { withCredentials: true })
+      ]);
+      setDonationHistory(donationsRes.data.donations || []);
+      setOrderHistory(ordersRes.data.orders || []);
+    } catch (error) {
+      console.error("Error fetching history:", error);
+    }
   };
   
   const handleChange = (e) => {
@@ -55,10 +75,47 @@ const Profile = () => {
     });
   };
   
-  const handleSave = () => {
-    // In a real app, this would update the user data in the backend
-    setEditMode(false);
-    alert('Profile updated successfully!');
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/user/profile/update`,
+        formData,
+        { withCredentials: true }
+      );
+      if (data.success) {
+        toast.success('Profile updated successfully!');
+        setEditMode(false);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/user/password/update`,
+        {
+          oldPassword: formData.oldPassword,
+          newPassword: formData.newPassword,
+          confirmPassword: formData.confirmPassword
+        },
+        { withCredentials: true }
+      );
+      if (data.success) {
+        toast.success('Password updated successfully!');
+        setFormData({ ...formData, oldPassword: '', newPassword: '', confirmPassword: '' });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update password');
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleLogout = () => {
@@ -114,26 +171,26 @@ const Profile = () => {
                 <p className="text-emerald-600 font-medium">FoodShare Community Member</p>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="space-y-3">
                 <div className="bg-emerald-50 rounded-xl p-4 text-center">
-                  <div className="text-emerald-600 font-bold text-2xl">{stats.donations}</div>
-                  <div className="text-gray-600 text-sm">Donations</div>
+                  <div className="text-emerald-600 font-bold text-2xl">{userImpact?.mealsProvided || 0}</div>
+                  <div className="text-gray-600 text-sm">Meals Shared</div>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-4 text-center">
-                  <div className="text-emerald-600 font-bold text-2xl">{stats.peopleFed}</div>
-                  <div className="text-gray-600 text-sm">People Fed</div>
+                  <div className="text-emerald-600 font-bold text-2xl">₹{userImpact?.donatedAmount || 0}</div>
+                  <div className="text-gray-600 text-sm">Donated</div>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-4 text-center">
-                  <div className="text-emerald-600 font-bold text-2xl">{stats.itemsShared}</div>
-                  <div className="text-gray-600 text-sm">Items Shared</div>
+                  <div className="text-emerald-600 font-bold text-2xl">{donationHistory.length}</div>
+                  <div className="text-gray-600 text-sm">Total Transactions</div>
                 </div>
                 <div className="bg-emerald-50 rounded-xl p-4 text-center">
-                  <div className="text-emerald-600 font-bold text-2xl">{stats.communityPoints}</div>
-                  <div className="text-gray-600 text-sm">Points</div>
+                  <div className="text-emerald-600 font-bold text-2xl">{(userImpact?.mealsProvided || 0) * 10}</div>
+                  <div className="text-gray-600 text-sm">Community Points</div>
                 </div>
               </div>
               
-              <nav className="space-y-2">
+              <nav className="mt-6 space-y-2">
                 <button 
                   className={`flex items-center w-full p-3 rounded-xl text-left ${
                     activeTab === 'profile' 
@@ -320,22 +377,22 @@ const Profile = () => {
                     <div className="flex items-center mb-4">
                       <FiHeart className="text-2xl mr-3" />
                       <div>
-                        <div className="text-2xl font-bold">{stats.peopleFed} people fed</div>
+                        <div className="text-2xl font-bold">{(userImpact?.mealsProvided || 0) + (userImpact?.donatedAmount || 0) / 10} lives touched</div>
                         <div className="opacity-80">through your donations</div>
                       </div>
                     </div>
                     <div className="flex justify-between">
                       <div>
-                        <div className="text-xl font-bold">{stats.donations}</div>
-                        <div className="opacity-80 text-sm">Donations</div>
+                        <div className="text-xl font-bold">{userImpact?.mealsProvided || 0}</div>
+                        <div className="opacity-80 text-sm">Meals Shared</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold">{stats.itemsShared}</div>
-                        <div className="opacity-80 text-sm">Items Shared</div>
+                        <div className="text-xl font-bold">₹{userImpact?.donatedAmount || 0}</div>
+                        <div className="opacity-80 text-sm">Donated</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold">{stats.communityPoints}</div>
-                        <div className="opacity-80 text-sm">Points</div>
+                        <div className="text-xl font-bold">{(userImpact?.mealsProvided || 0) * 10}</div>
+                        <div className="opacity-80 text-sm">Points Earned</div>
                       </div>
                     </div>
                   </div>
@@ -343,54 +400,76 @@ const Profile = () => {
               </div>
             )}
             
-            {/* Donation History Tab */}
             {activeTab === 'donations' && (
               <div className="bg-white rounded-3xl shadow-xl p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Donation History</h2>
                 
                 <div className="space-y-4">
-                  {donationHistory.map((donation) => (
-                    <div 
-                      key={donation.id}
-                      className="border border-gray-200 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center"
-                    >
-                      <div className="bg-emerald-100 text-emerald-800 rounded-xl p-3 mr-4">
-                        <FiBox className="text-2xl" />
-                      </div>
-                      
-                      <div className="flex-1 mr-4">
-                        <div className="font-semibold text-gray-800">{donation.items}</div>
-                        <div className="text-sm text-gray-600 mt-1">{donation.impact}</div>
-                      </div>
-                      
-                      <div className="flex flex-col md:items-end mt-3 md:mt-0">
-                        <div className="text-sm text-gray-500">
-                          <FiClock className="inline mr-1" />
-                          {donation.date}
-                        </div>
-                        <div className={`mt-2 px-3 py-1 rounded-full text-sm font-medium ${
-                          donation.status === 'Delivered' 
-                            ? 'bg-emerald-100 text-emerald-800' 
-                            : 'bg-amber-100 text-amber-800'
-                        }`}>
-                          {donation.status}
-                        </div>
-                      </div>
+                  {donationHistory.length === 0 && orderHistory.length === 0 ? (
+                    <div className="text-center py-10 text-gray-500">
+                      No donation history found. Start your journey today!
                     </div>
-                  ))}
-                </div>
-                
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Upcoming Donations</h3>
-                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white">
-                    <div className="flex items-center">
-                      <FiClock className="text-2xl mr-3" />
-                      <div>
-                        <div className="text-xl font-bold">Scheduled for June 25, 2023</div>
-                        <div className="opacity-90">Fresh produce from your garden</div>
-                      </div>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      {/* Money Donations */}
+                      {donationHistory.map((donation) => (
+                        <div 
+                          key={donation._id}
+                          className="border border-gray-200 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center"
+                        >
+                          <div className="bg-emerald-100 text-emerald-800 rounded-xl p-3 mr-4">
+                            <FiCreditCard className="text-2xl" />
+                          </div>
+                          
+                          <div className="flex-1 mr-4">
+                            <div className="font-semibold text-gray-800">Financial Donation</div>
+                            <div className="text-sm text-gray-600 mt-1">₹{donation.amount} contributed to FoodShare</div>
+                          </div>
+                          
+                          <div className="flex flex-col md:items-end mt-3 md:mt-0">
+                            <div className="text-sm text-gray-500">
+                              <FiClock className="inline mr-1" />
+                              {new Date(donation.createdAt).toLocaleDateString()}
+                            </div>
+                            <div className="mt-2 px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
+                              {donation.status}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Food Donations (Orders) */}
+                      {orderHistory.map((order) => (
+                        <div 
+                          key={order._id}
+                          className="border border-gray-200 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center mt-4"
+                        >
+                          <div className="bg-blue-100 text-blue-800 rounded-xl p-3 mr-4">
+                            <FiBox className="text-2xl" />
+                          </div>
+                          
+                          <div className="flex-1 mr-4">
+                            <div className="font-semibold text-gray-800">{order.foodDetails}</div>
+                            <div className="text-sm text-gray-600 mt-1">{order.quantity} units • {order.foodType}</div>
+                          </div>
+                          
+                          <div className="flex flex-col md:items-end mt-3 md:mt-0">
+                            <div className="text-sm text-gray-500">
+                              <FiClock className="inline mr-1" />
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </div>
+                            <div className={`mt-2 px-3 py-1 rounded-full text-sm font-medium ${
+                              order.status === 'Completed' 
+                                ? 'bg-emerald-100 text-emerald-800' 
+                                : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {order.status}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -403,12 +482,49 @@ const Profile = () => {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-3">Password</h3>
-                    <div className="flex items-center p-4 bg-gray-50 rounded-xl">
-                      <FiLock className="text-emerald-600 mr-3" />
-                      <div className="flex-1">••••••••</div>
-                      <button className="text-emerald-600 hover:text-emerald-800 font-medium">
-                        Change Password
-                      </button>
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                          <input
+                            type="password"
+                            name="oldPassword"
+                            value={formData.oldPassword}
+                            onChange={handleChange}
+                            className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                          <input
+                            type="password"
+                            name="newPassword"
+                            value={formData.newPassword}
+                            onChange={handleChange}
+                            className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                          <input
+                            type="password"
+                            name="confirmPassword"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                            required
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                        >
+                          {loading ? 'Updating...' : 'Update Password'}
+                        </button>
+                      </form>
                     </div>
                   </div>
                   

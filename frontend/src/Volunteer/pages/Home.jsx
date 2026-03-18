@@ -6,394 +6,315 @@ import {
   FiClock,
   FiUser,
   FiMapPin,
-  FiPackage,
   FiLogOut,
-  FiX,
   FiCheckCircle,
+  FiTruck,
+  FiNavigation,
+  
+  FiActivity,
+  FiStar,
 } from "react-icons/fi";
-import { FaHandHoldingHeart, FaMapMarkerAlt, FaPhone } from "react-icons/fa";
-import { TbTruckDelivery } from "react-icons/tb";
+import { FaHandHoldingHeart, FaCrown, FaMedal } from "react-icons/fa";
+import toast from "react-hot-toast";
+import axios from "axios";
+import { FiAward } from "react-icons/fi";
+
 
 const Home = () => {
   const { user, logout } = useContext(AuthContext);
   const [acceptedOrders, setAcceptedOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [completing, setCompleting] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [userImpact, setUserImpact] = useState(null);
+  const [leaderboard, setLeaderboard] = useState(null);
 
   const navigate = useNavigate();
 
-  // Redirect if not logged in
   useEffect(() => {
-    if (!user) {
-      navigate("/");
-    }
-  }, [user, navigate]);
-
-  // Fetch accepted orders
-  useEffect(() => {
-    const fetchAcceptedOrders = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/order/volunteer/orders`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-
-        const data = await response.json();
-        if (!response.ok)
-          throw new Error(data.message || "Failed to fetch accepted orders.");
-
-        setAcceptedOrders(data.orders);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAcceptedOrders();
+    fetchAllData();
   }, []);
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      const [ordersRes, impactRes, leaderboardRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/order/volunteer/orders`, { withCredentials: true }),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/impact`, { withCredentials: true }),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/leaderboard`),
+      ]);
+      setAcceptedOrders(ordersRes.data.orders);
+      setUserImpact(impactRes.data.impact);
+      setLeaderboard(leaderboardRes.data.leaderboard);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCompleteOrder = async (orderId) => {
     setCompleting(true);
     try {
-      const response = await fetch(
+      const { data } = await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/order/complete`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId }),
-        }
+        { orderId },
+        { withCredentials: true }
       );
 
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || "Failed to complete order.");
-
-      alert("Order marked as completed!");
-      setAcceptedOrders(acceptedOrders.filter((order) => order._id !== orderId));
-      setModalOpen(false);
-      setSelectedOrder(null);
+      if (data.success) {
+        toast.success("Mission Accomplished! Order marked as completed.");
+        setSelectedOrder(null);
+        fetchAllData();
+      }
     } catch (err) {
-      alert(err.message);
+      toast.error(err.response?.data?.message || "Failed to complete order");
     } finally {
       setCompleting(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch(`${import.meta.env.VITE_BACKEND_URL}/user/logout`, {
-        method: "GET",
-        credentials: "include",
-      });
-      logout();
-      navigate("/");
-    } catch (err) {
-      console.error("Logout failed:", err);
-    }
-  };
-
-  const openModal = (order) => {
-    setSelectedOrder(order);
-    setModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalOpen(false);
-    setSelectedOrder(null);
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   // Stats calculations
-  const completedToday = acceptedOrders.filter((order) => {
-    const today = new Date().toDateString();
-    return (
-      order.status === "completed" &&
-      order.completedAt &&
-      new Date(order.completedAt).toDateString() === today
-    );
-  }).length;
+  const completedTodayCount = 0; // This could be fetched from backend history if needed
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white p-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold flex items-center">
-            <TbTruckDelivery className="mr-2" />
-            FoodShare Volunteer
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      {/* Sidebar */}
+      <aside className="w-full md:w-72 bg-emerald-900 text-white flex flex-col">
+        <div className="p-8">
+          <h1 className="text-2xl font-black tracking-tighter flex items-center gap-2">
+            <FiTruck className="text-emerald-400" /> VOLUNTEER
           </h1>
-
-          <div className="flex space-x-4">
-            <button
-              onClick={() => navigate("/volunteer/history")}
-              className="flex items-center bg-white text-emerald-600 px-4 py-2 rounded-full font-medium hover:bg-gray-100 transition shadow-sm"
-            >
-              <FiClock className="mr-2" />
-              History
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="flex items-center bg-white text-emerald-600 px-4 py-2 rounded-full font-medium hover:bg-gray-100 transition shadow-sm"
-            >
-              <FiLogOut className="mr-2" />
-              Logout
-            </button>
-          </div>
+          <p className="text-emerald-400 text-xs font-bold mt-1 uppercase tracking-widest">Delivery Squad</p>
         </div>
-      </header>
 
-      {/* Hero Section */}
-      <div className="relative h-48 md:h-56 overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center px-4 z-10">
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
-              Your Active Deliveries
-            </h1>
-            <p className="text-emerald-100 text-md max-w-2xl">
-              Click on any delivery to view details and complete the task
-            </p>
+        <nav className="flex-1 px-4 space-y-2">
+          <button className="w-full flex items-center gap-3 px-4 py-3 bg-emerald-800 rounded-xl text-white font-bold transition-all">
+            <FiNavigation /> Active Missions
+          </button>
+          <button onClick={() => navigate("/volunteer/history")} className="w-full flex items-center gap-3 px-4 py-3 text-emerald-300 hover:bg-emerald-800 hover:text-white rounded-xl font-bold transition-all">
+            <FiClock /> Past Deliveries
+          </button>
+          <button onClick={() => navigate("/profile")} className="w-full flex items-center gap-3 px-4 py-3 text-emerald-300 hover:bg-emerald-800 hover:text-white rounded-xl font-bold transition-all">
+            <FiUser /> Profile
+          </button>
+        </nav>
+
+        <div className="p-6 border-t border-emerald-800">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center font-bold">
+              {user?.firstName?.charAt(0)}
+            </div>
+            <div className="overflow-hidden">
+              <p className="font-bold truncate">{user?.firstName}</p>
+              <p className="text-xs text-emerald-400 truncate">On-Ground Hero</p>
+            </div>
           </div>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl font-bold transition-all">
+            <FiLogOut /> Logout
+          </button>
         </div>
-        <div className="absolute inset-0 bg-black opacity-10"></div>
-      </div>
+      </aside>
 
-      {/* Stats Cards */}
-      <div className="container mx-auto -mt-8 z-10 relative">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-4">
-          <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-emerald-500">
-            <h3 className="text-gray-500 text-sm font-medium">Assigned to You</h3>
-            <p className="text-3xl font-bold mt-2 text-emerald-600">
-              {acceptedOrders.length}
-            </p>
+      {/* Main Content */}
+      <main className="flex-1 p-4 md:p-10 overflow-y-auto">
+        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
+          <div>
+            <h2 className="text-3xl font-black text-gray-900">Your Active Missions</h2>
+            <p className="text-gray-500">Pick up and deliver food to those in need.</p>
           </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-500">
-            <h3 className="text-gray-500 text-sm font-medium">Completed Today</h3>
-            <p className="text-3xl font-bold mt-2 text-blue-600">
-              {completedToday}
-            </p>
+          <div className="flex gap-4 w-full lg:w-auto">
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 flex-1 lg:flex-none">
+              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 text-xl">
+                <FiTruck />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase">Active</p>
+                <p className="text-xl font-black text-gray-900">{acceptedOrders.length}</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 flex-1 lg:flex-none">
+              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-500 text-xl">
+                <FiCheckCircle />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase">Completed</p>
+                <p className="text-xl font-black text-gray-900">{userImpact?.mealsProvided || 0}</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 flex-1 lg:flex-none">
+              <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500 text-xl">
+                <FiStar />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase">Impact Points</p>
+                <p className="text-xl font-black text-gray-900">{(userImpact?.mealsProvided || 0) * 10}</p>
+              </div>
+            </div>
           </div>
+        </header>
 
-          <div className="bg-white p-6 rounded-xl shadow-lg border-t-4 border-amber-500">
-            <h3 className="text-gray-500 text-sm font-medium">Your Impact</h3>
-            <p className="text-3xl font-bold mt-2 text-amber-600">
-              {acceptedOrders.reduce((sum, o) => sum + (o.quantity || 0), 0)} meals
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Orders Grid */}
-      <div className="container mx-auto py-8 px-4">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center mb-6">
-          <FaHandHoldingHeart className="mr-2 text-emerald-600" />
-          Your Deliveries
-        </h2>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin h-12 w-12 border-t-2 border-emerald-500 rounded-full"></div>
-          </div>
-        ) : error ? (
-          <div className="text-center py-12 bg-white rounded-xl shadow">
-            <p className="text-red-500">{error}</p>
-          </div>
-        ) : acceptedOrders.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl shadow">
-            <p className="text-gray-500">No active deliveries. Check back later!</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {acceptedOrders.map((order) => (
-              <motion.div
-                key={order._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -8 }}
-                onClick={() => openModal(order)}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-all cursor-pointer group"
-              >
-                <div className="h-2 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="bg-emerald-100 p-3 rounded-full">
-                      <TbTruckDelivery className="text-emerald-600 text-xl" />
-                    </div>
-                    <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-full font-medium">
-                      {order.status}
-                    </span>
-                  </div>
-
-                  <h3 className="font-bold text-lg text-gray-800 mb-1">
-                    {order.userId?.firstName} {order.userId?.lastName}
-                  </h3>
-
-                  <div className="flex items-center text-sm text-gray-500 mb-2">
-                    <FiMapPin className="mr-1 text-emerald-500" />
-                    {order.userId?.address?.slice(0, 30)}...
-                  </div>
-
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                    {order.foodDetails}
-                  </p>
-
-                  <div className="flex justify-between items-center text-xs text-gray-400">
-                    <span>Qty: {order.quantity} servings</span>
-                    <span>
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+          {/* Active Missions List */}
+          <div className="xl:col-span-2 space-y-8">
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="h-64 bg-white animate-pulse rounded-[2.5rem] shadow-sm"></div>
+                ))}
+              </div>
+            ) : acceptedOrders.length === 0 ? (
+              <div className="bg-white rounded-[3rem] p-16 text-center shadow-sm border border-gray-100">
+                <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-500 text-4xl">
+                  <FiCheckCircle />
                 </div>
-                <div className="bg-emerald-50 px-6 py-3 text-emerald-700 text-sm font-medium group-hover:bg-emerald-100 transition">
-                  Click to view details →
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Order Details Modal */}
-      <AnimatePresence>
-        {modalOpen && selectedOrder && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-            onClick={closeModal}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-emerald-600 to-teal-500 p-6 text-white">
-                <div className="flex justify-between items-start">
-                  <h2 className="text-2xl font-bold">Delivery Details</h2>
-                  <button
-                    onClick={closeModal}
-                    className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition"
+                <h3 className="text-2xl font-black text-gray-900 mb-2">No Active Missions</h3>
+                <p className="text-gray-500 max-w-sm mx-auto">Great job! You've completed all your deliveries. Wait for new assignments from NGOs.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {acceptedOrders.map((order) => (
+                  <motion.div
+                    key={order._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100 flex flex-col hover:shadow-2xl transition-all duration-300"
                   >
-                    <FiX className="text-xl" />
-                  </button>
-                </div>
-                <p className="text-emerald-100 mt-1">
-                  Order ID: {selectedOrder._id.slice(-8)}
+                    <div className="p-8 border-b border-gray-50 bg-emerald-50/30">
+                      <div className="flex justify-between items-start mb-4">
+                        <span className="bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                          In Progress
+                        </span>
+                        <span className="text-xs text-gray-400 font-bold uppercase">
+                          ID: {order._id.slice(-6)}
+                        </span>
+                      </div>
+                      <h3 className="text-2xl font-black text-gray-900 mb-1">{order.foodDetails}</h3>
+                      <p className="text-emerald-600 font-bold">{order.quantity} Units • {order.foodType}</p>
+                    </div>
+
+                    <div className="p-8 space-y-6 flex-1">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-emerald-500 shrink-0">
+                          <FiMapPin />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-black uppercase tracking-widest">Pickup Address</p>
+                          <p className="font-bold text-gray-800 leading-tight">{order.address}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-blue-500 shrink-0">
+                          <FiUser />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 font-black uppercase tracking-widest">Contact Donor</p>
+                          <p className="font-bold text-gray-800">{order.userId?.firstName || "Anonymous"}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-8 pt-0">
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black shadow-xl hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        Mark as Delivered <FiCheckCircle />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar - Leaderboard & Activity */}
+          <div className="space-y-8">
+            {/* Top Volunteers */}
+            <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100">
+              <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                <FiAward  className="text-yellow-500" /> Squad Leaders
+              </h3>
+              <div className="space-y-4">
+                {leaderboard?.topVolunteers?.slice(0, 5).map((vol, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 hover:bg-emerald-50 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
+                        idx === 0 ? "bg-yellow-400 text-white" : "bg-white text-gray-400"
+                      }`}>
+                        {idx + 1}
+                      </div>
+                      <p className="font-bold text-gray-800 text-sm">{vol.name}</p>
+                    </div>
+                    <p className="font-black text-emerald-600 text-sm">{vol.completedTasks} Missions</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Impact Tips */}
+            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden">
+              <div className="relative z-10">
+                <FiStar className="text-3xl text-emerald-300 mb-4" />
+                <h4 className="text-xl font-bold mb-2">Pro Tip!</h4>
+                <p className="text-emerald-100 text-sm leading-relaxed">
+                  Always verify the food quality before pickup. Your diligence ensures safe meals for our beneficiaries.
                 </p>
               </div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
+            </div>
+          </div>
+        </div>
+      </main>
 
-              {/* Modal Body */}
-              <div className="p-6 space-y-6">
-                {/* Receiver Info */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <FiUser className="mr-2 text-emerald-600" />
-                    Receiver Information
-                  </h3>
-                  <div className="bg-emerald-50 p-4 rounded-xl">
-                    <p className="font-medium text-gray-800">
-                      {selectedOrder.userId?.firstName}{" "}
-                      {selectedOrder.userId?.lastName}
-                    </p>
-                    <p className="text-gray-600 flex items-start mt-2">
-                      <FiMapPin className="mr-2 mt-1 text-emerald-600 flex-shrink-0" />
-                      <span>{selectedOrder.userId?.address || "Address not provided"}</span>
-                    </p>
-                    {selectedOrder.userId?.phone && (
-                      <p className="text-gray-600 flex items-center mt-2">
-                        <FaPhone className="mr-2 text-emerald-600" />
-                        {selectedOrder.userId.phone}
-                      </p>
-                    )}
-                    {/* Directions Button */}
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        selectedOrder.userId?.address || ""
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center mt-3 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"
-                    >
-                      <FaMapMarkerAlt className="mr-2" />
-                      Get Directions
-                    </a>
-                  </div>
-                </div>
+      {/* Completion Confirmation Modal */}
+      <AnimatePresence>
+        {selectedOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedOrder(null)}
+              className="absolute inset-0 bg-emerald-950/40 backdrop-blur-sm"
+            ></motion.div>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden p-10 text-center"
+            >
+              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-500 text-4xl">
+                <FiCheckCircle />
+              </div>
+              <h3 className="text-2xl font-black text-gray-900 mb-2">Confirm Delivery</h3>
+              <p className="text-gray-500 mb-8">Have you successfully picked up and delivered "{selectedOrder.foodDetails}" to the beneficiary?</p>
 
-                {/* Food Details */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <FiPackage className="mr-2 text-emerald-600" />
-                    Food Details
-                  </h3>
-                  <div className="bg-amber-50 p-4 rounded-xl">
-                    <p className="text-gray-800">{selectedOrder.foodDetails}</p>
-                    <p className="text-sm text-gray-600 mt-2">
-                      Quantity: {selectedOrder.quantity} servings
-                    </p>
-                  </div>
-                </div>
-
-                {/* Assigned Info */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                    <FiClock className="mr-2 text-emerald-600" />
-                    Assignment Info
-                  </h3>
-                  <div className="bg-blue-50 p-4 rounded-xl">
-                    <p className="text-gray-600">
-                      Assigned on:{" "}
-                      {new Date(
-                        selectedOrder.assignedAt || selectedOrder.createdAt
-                      ).toLocaleString()}
-                    </p>
-                    <p className="text-gray-600 mt-1">
-                      Status:{" "}
-                      <span className="font-semibold text-emerald-600">
-                        {selectedOrder.status}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Complete Button */}
-                <div className="pt-4 border-t">
-                  <button
-                    onClick={() => handleCompleteOrder(selectedOrder._id)}
-                    disabled={completing}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition flex items-center justify-center disabled:opacity-50"
-                  >
-                    {completing ? (
-                      <>
-                        <div className="animate-spin h-5 w-5 border-t-2 border-white rounded-full mr-2"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <FiCheckCircle className="mr-2 text-xl" />
-                        Mark as Completed
-                      </>
-                    )}
-                  </button>
-                </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="flex-1 py-4 text-gray-500 font-black hover:text-gray-700"
+                >
+                  Go Back
+                </button>
+                <button
+                  onClick={() => handleCompleteOrder(selectedOrder._id)}
+                  disabled={completing}
+                  className="flex-2 bg-emerald-500 text-white py-4 px-8 rounded-2xl font-black shadow-xl hover:bg-emerald-600 transition-all disabled:opacity-50"
+                >
+                  {completing ? "Updating..." : "Yes, Delivered!"}
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
