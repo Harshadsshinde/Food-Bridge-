@@ -140,7 +140,7 @@ const Profile = () => {
               </div>
             </div>
             <h1 className="ml-3 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-700">
-              FoodShare
+              FoodBridge
             </h1>
           </div>
           
@@ -168,7 +168,7 @@ const Profile = () => {
                   </button>
                 </div>
                 <h2 className="text-xl font-bold text-gray-800">{user.firstName} {user.lastName}</h2>
-                <p className="text-emerald-600 font-medium">FoodShare Community Member</p>
+                <p className="text-emerald-600 font-medium">FoodBridge Community Member</p>
               </div>
               
               <div className="space-y-3">
@@ -423,7 +423,7 @@ const Profile = () => {
                           
                           <div className="flex-1 mr-4">
                             <div className="font-semibold text-gray-800">Financial Donation</div>
-                            <div className="text-sm text-gray-600 mt-1">₹{donation.amount} contributed to FoodShare</div>
+                            <div className="text-sm text-gray-600 mt-1">₹{donation.amount} contributed to FoodBridge</div>
                           </div>
                           
                           <div className="flex flex-col md:items-end mt-3 md:mt-0">

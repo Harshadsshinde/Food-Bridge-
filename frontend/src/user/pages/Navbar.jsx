@@ -61,6 +61,7 @@ const Navbar = () => {
     { path: "/user/dashboard", icon: <FaHome />, label: "Home" },
     { path: "/user/donate", icon: <FaHandHoldingHeart />, label: "Donate" },
     { path: "/user/history", icon: <FaHistory />, label: "History" },
+    { path: "/user/profile", icon: <FaUser />, label: "Profile" },
   ];
 
   return (
@@ -71,10 +72,10 @@ const Navbar = () => {
             <div className="flex justify-between items-center h-20">
               {/* Logo */}
               <NavLink to="/" className="flex items-center">
-                <div className="bg-white p-2 rounded-full mr-3">
-                  <FaHandHoldingHeart className="text-emerald-600 text-xl" />
+                <div className="bg-white p-2.5 rounded-2xl mr-4 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                  <FaHandHoldingHeart className="text-emerald-600 text-2xl" />
                 </div>
-                <h1 className="text-xl md:text-2xl font-bold">FoodShare</h1>
+                <h1 className="text-xl md:text-2xl font-bold">FoodBridge</h1>
               </NavLink>
 
               {/* Desktop Navigation */}

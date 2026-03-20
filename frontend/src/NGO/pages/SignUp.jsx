@@ -488,7 +488,7 @@ const SignUp = () => {
         </motion.div>
 
         <div className="mt-8 text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} FoodShare. All rights reserved.
+          © {new Date().getFullYear()} FoodBridge. All rights reserved.
         </div>
       </motion.div>
     </div>

@@ -35,8 +35,8 @@ const DonationModal = ({ isOpen, onClose }) => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Use environment variable
         amount: order.amount,
         currency: order.currency,
-        name: "FoodShare Donation",
-        description: "Thank you for your contribution!",
+        name: "FoodBridge Donation",
+        description: "Contribute to FoodBridge Global",
         order_id: order.id,
         handler: async (response) => {
           try {

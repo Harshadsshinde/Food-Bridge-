@@ -4,13 +4,13 @@ import {
   FaHandHoldingUsd,
   FaUsers,
   FaGift,
-  FaTrophy,
   FaMedal,
   FaCrown,
   FaChartLine,
   FaChevronRight,
   FaQuoteLeft,
 } from "react-icons/fa";
+import { FiAward } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import DonationModal from "./DonationModal";
@@ -69,11 +69,7 @@ const Home = () => {
   }, [isAuthenticated]);
 
   const handleDonationClick = (title) => {
-    if (title === "Money Donation") {
-      setIsDonationModalOpen(true);
-    } else if (title === "Food Donation") {
-      navigate("/user/donate");
-    }
+    navigate("/user/donate");
   };
 
   return (
@@ -198,7 +194,7 @@ const Home = () => {
                   <div className="text-center lg:text-left flex-1">
                     <h2 className="text-4xl md:text-5xl font-black mb-6">Hello, {user?.firstName}! 👋</h2>
                     <p className="text-emerald-100 text-xl mb-8 leading-relaxed max-w-xl">
-                      You're a vital part of the FoodShare family. Your consistent support is turning surplus into survival for many.
+                      You're a vital part of the FoodBridge family. Your consistent support is turning surplus into survival for many.
                     </p>
                     <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
                       <button
@@ -312,7 +308,7 @@ const Home = () => {
               whileInView={{ scale: 1, opacity: 1 }}
               className="inline-flex items-center gap-2 bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full font-bold text-sm mb-4"
             >
-              <FaTrophy /> TOP CONTRIBUTORS
+              <FiAward /> TOP CONTRIBUTORS
             </motion.div>
             <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6">Our Community Heroes</h2>
             <p className="text-gray-500 text-xl">Honoring those who lead the way in kindness</p>
@@ -605,7 +601,7 @@ const Home = () => {
       <section className="py-24 bg-white relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6">Voices of FoodShare</h2>
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-6">Voices of FoodBridge</h2>
             <p className="text-gray-500 text-xl max-w-3xl mx-auto">
               Real feedback from the incredible people making this movement possible.
             </p>
@@ -615,7 +611,7 @@ const Home = () => {
             {[
               {
                 quote:
-                  "Donating through FoodShare has been incredibly rewarding. Knowing my surplus food helps families in need gives me peace of mind.",
+                  "Donating through FoodBridge has been incredibly rewarding. Knowing my surplus food helps families in need gives me peace of mind.",
                 name: "Sarah Johnson",
                 role: "Restaurant Owner",
                 image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80"
@@ -629,7 +625,7 @@ const Home = () => {
               },
               {
                 quote:
-                  "During a difficult time, FoodShare provided meals for my family. This initiative is a lifeline for so many in our community.",
+                  "During a difficult time, FoodBridge provided meals for my family. This initiative is a lifeline for so many in our community.",
                 name: "Maria Rodriguez",
                 role: "Beneficiary",
                 image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80"
@@ -697,7 +693,7 @@ const Home = () => {
                 <div className="bg-emerald-500 p-3 rounded-2xl mr-4 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
                   <FaHandHoldingHeart className="text-white text-2xl" />
                 </div>
-                <h3 className="text-2xl font-black tracking-tight">FoodShare</h3>
+                <h3 className="text-2xl font-black tracking-tight">FoodBridge</h3>
               </div>
               <p className="text-gray-400 text-lg mb-8 leading-relaxed">
                 Connecting surplus food with those in need to build stronger, zero-hunger communities.
@@ -738,7 +734,7 @@ const Home = () => {
                   <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-emerald-500 flex-shrink-0">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                   </div>
-                  <span className="text-gray-400 font-medium">contact@foodshare.org</span>
+                  <span className="text-gray-400 font-medium">contact@foodbridge.org</span>
                 </li>
                 <li className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-emerald-500 flex-shrink-0">
@@ -751,7 +747,7 @@ const Home = () => {
           </div>
 
           <div className="border-t border-gray-800 mt-20 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-gray-500 font-bold">© {new Date().getFullYear()} FoodShare. Built with ❤️ for India.</p>
+            <p className="text-gray-500 font-bold">© {new Date().getFullYear()} FoodBridge. Built with ❤️ for India.</p>
             <div className="flex gap-8 text-sm font-black text-gray-600 uppercase tracking-widest">
               <a href="#" className="hover:text-white transition-colors">Legal</a>
               <a href="#" className="hover:text-white transition-colors">Sitemap</a>
