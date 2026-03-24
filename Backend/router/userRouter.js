@@ -5,7 +5,13 @@ import {
     getUserDetails,
     getAllVolunteers,
     getAllNGOs,
-    logoutUser
+    logoutUser,
+    getGlobalStats,
+    getUserImpact,
+    getLeaderboard,
+    updateMyProfile,
+    updateMyPassword,
+    getRecentActivity
 } from "../controller/userController.js";
 import { isAuthenticated } from "../middlewares/auth.js";
 
@@ -28,5 +34,15 @@ router.get("/ngos", getAllNGOs);
 
 // Logout User
 router.get("/logout", logoutUser);
+
+// Stats & Leaderboard (Public/User)
+router.get("/stats", getGlobalStats);
+router.get("/leaderboard", getLeaderboard);
+router.get("/activities", getRecentActivity);
+router.get("/impact", isAuthenticated, getUserImpact);
+
+// Profile Management
+router.put("/profile/update", isAuthenticated, updateMyProfile);
+router.put("/password/update", isAuthenticated, updateMyPassword);
 
 export default router;

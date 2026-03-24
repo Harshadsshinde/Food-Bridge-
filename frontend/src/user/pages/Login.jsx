@@ -27,7 +27,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:4000/api/v1/user/login',
+        `${import.meta.env.VITE_BACKEND_URL}/user/login`,
         { email, password, role: "User" },
         { withCredentials: true, timeout: 5000 }
       );
@@ -87,7 +87,7 @@ const Login = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            FoodShare
+            FoodBridge
           </motion.h1>
           <motion.p 
             className="text-teal-700 font-semibold text-lg"
@@ -235,7 +235,7 @@ const Login = () => {
         </motion.div>
         
         <div className="mt-8 text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} FoodShare. Bringing communities together through food sharing.
+          © {new Date().getFullYear()} FoodBridge. Bringing communities together through food sharing.
         </div>
       </motion.div>
     </div>

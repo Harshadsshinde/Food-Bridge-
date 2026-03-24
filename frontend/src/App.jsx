@@ -31,6 +31,8 @@ import VolunteerHistory from "./Volunteer/pages/History";
 import VolunteerSignUp from "./Volunteer/pages/SignUp";
 
 
+import { Toaster } from "react-hot-toast";
+
 function App() {
 
   const { isAuthenticated, role } = useContext(AuthContext);
@@ -42,8 +44,6 @@ function App() {
     switch (role) {
       case "user":
         return <UserNavbar />;
-      case "volunteer":
-        return <VolunteerNavbar />;
       default:
         return null;
     }
@@ -63,10 +63,9 @@ function App() {
     return children;
   };
 
-
   return (
     <Router>
-
+      <Toaster position="top-center" reverseOrder={false} />
       {renderNavbar()}
 
       <Routes>
@@ -109,11 +108,9 @@ function App() {
         />
 
         <Route
-          path="/user/profile"
+          path="/profile"
           element={
-            <ProtectedRoute allowedRole="user">
-              <Profile />
-            </ProtectedRoute>
+            isAuthenticated ? <Profile /> : <Navigate to="/" />
           }
         />
 
@@ -175,7 +172,6 @@ function App() {
 
         <Route path="/donate" element={<Navigate to="/user/donate" />} />
         <Route path="/history" element={<Navigate to="/user/history" />} />
-        <Route path="/profile" element={<Navigate to="/user/profile" />} />
 
         <Route path="/login" element={<Navigate to="/user/login" />} />
         <Route path="/signin" element={<Navigate to="/user/signin" />} />

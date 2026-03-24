@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { FiUser, FiMail, FiPhone, FiMapPin, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 
@@ -42,7 +42,7 @@ const SignIn = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:4000/api/v1/user/register',
+        `${import.meta.env.VITE_BACKEND_URL}/user/register`,
         formData,
         {
           headers: {
@@ -94,7 +94,7 @@ const SignIn = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            FoodShare
+            FoodBridge
           </motion.h1>
           <motion.p 
             className="text-teal-700 font-semibold text-lg"
@@ -342,12 +342,12 @@ const SignIn = () => {
               <div className="text-center mt-6">
                 <p className="text-gray-600">
                   Already have an account?{' '}
-                  <a 
-                    href="/user/login" 
+                  <Link 
+                    to="/user/login" 
                     className="font-semibold text-emerald-600 hover:text-emerald-800 hover:underline transition-colors"
                   >
                     Sign In
-                  </a>
+                  </Link>
                 </p>
               </div>
             </form>
@@ -355,7 +355,7 @@ const SignIn = () => {
         </motion.div>
         
         <div className="mt-8 text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} FoodShare. Bringing communities together through food sharing.
+          © {new Date().getFullYear()} FoodBridge. Bringing communities together through food sharing.
         </div>
       </motion.div>
     </div>
