@@ -17,7 +17,7 @@
     "@mui/material": "^6.4.4",
     "@mui/x-date-pickers": "^7.27.0",
     "axios": "^1.13.6",
-    "date-fns": "^2.30.0",
+    "date-fns": "^3.2.0",
     "framer-motion": "^12.35.2",
     "react": "^19.2.0",
     "react-datepicker": "^8.4.0",
