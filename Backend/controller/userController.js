@@ -243,10 +243,11 @@ export const getAllNGOs = catchAsyncErrors(async (req, res, next) => {
 
 // Logout User
 export const logoutUser = catchAsyncErrors(async (req, res, next) => {
+    const isProduction = process.env.NODE_ENV === "production";
     res.status(200).cookie("Token", "", {
         httpOnly: true,
         expires: new Date(Date.now()),
-        secure: false,
-        sameSite: "lax"
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax"
     }).json({ success: true, message: "Logged Out Successfully" });
 });
