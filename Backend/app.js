@@ -12,12 +12,15 @@ import donationRoutes from "./router/donationRoutes.js";
 
 const app = express();
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.NGO_URL,
+  process.env.VOLUNTEER_URL,
+  process.env.DEPLOYED_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL,
-    process.env.NGO_URL,
-    process.env.VOLUNTEER_URL
-  ],
+  origin: allowedOrigins,
   methods: ["GET", "POST", "DELETE", "PUT"],
   credentials: true,
 }));
